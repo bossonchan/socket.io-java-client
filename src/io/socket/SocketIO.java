@@ -126,7 +126,7 @@ public class SocketIO {
 	
 	/**
 	 * Set the socket factory used for SSL connections.
-	 * @param socketFactory
+	 * @param sslContext
 	 */
 	public static void setDefaultSSLSocketFactory(SSLContext sslContext) {
 		IOConnection.setSslContext(sslContext);
@@ -319,8 +319,8 @@ public class SocketIO {
 	/**
 	 * Disconnect the socket.
 	 */
-	public void disconnect() {
-		this.connection.unregister(this);
+	public void disconnect() throws NullPointerException {
+    this.connection.unregister(this);
 	}
 
 	/**

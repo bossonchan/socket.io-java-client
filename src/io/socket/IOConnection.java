@@ -13,21 +13,13 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -97,7 +89,7 @@ class IOConnection implements IOCallback {
 	private ConcurrentLinkedQueue<String> outputBuffer = new ConcurrentLinkedQueue<String>();
 
 	/** The sockets of this connection. */
-	private HashMap<String, SocketIO> sockets = new HashMap<String, SocketIO>();
+	private ConcurrentHashMap<String, SocketIO> sockets = new ConcurrentHashMap<String, SocketIO>();
 
 	/** Custom Request headers used while handshaking */
 	private Properties headers;
@@ -232,7 +224,7 @@ class IOConnection implements IOCallback {
 	static public IOConnection register(String origin, SocketIO socket) {
 		List<IOConnection> list = connections.get(origin);
 		if (list == null) {
-			list = new LinkedList<IOConnection>();
+			list = Collections.synchronizedList(new LinkedList<IOConnection>());
 			connections.put(origin, list);
 		} else {
 			synchronized (list) {
@@ -319,6 +311,7 @@ class IOConnection implements IOCallback {
 			closingTimeout = Long.parseLong(data[2]) * 1000;
 			protocols = Arrays.asList(data[3].split(","));
 		} catch (Exception e) {
+			e.printStackTrace();
 			error(new SocketIOException("Error while handshaking", e));
 		}
 	}
@@ -698,8 +691,8 @@ class IOConnection implements IOCallback {
 							remoteAcknowledge(message), argsArray);
 				} catch (Exception e) {
 					error(new SocketIOException(
-							"Exception was thrown in on(String, JSONObject[]).\n"
-									+ "Message was: " + message.toString(), e));
+                  "Exception was thrown in on(String, JSONObject[]).\n"
+                          + "Message was: " + message.toString(), e));
 				}
 			} catch (JSONException e) {
 				logger.warning("Malformated JSON received");
