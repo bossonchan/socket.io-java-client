@@ -3,6 +3,7 @@ package io.socket;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
@@ -10,6 +11,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
 
 class WebsocketTransport extends WebSocketClient implements IOTransport {
@@ -26,7 +28,9 @@ class WebsocketTransport extends WebSocketClient implements IOTransport {
     }
 
     public WebsocketTransport(URI uri, IOConnection connection) {
-        super(uri);
+        // Original Code:
+        // super(uri);
+        super(uri, new Draft_17(), connection.getUpgradeHeaders());
         this.connection = connection;
         SSLContext context = IOConnection.getSslContext();
         if("wss".equals(uri.getScheme()) && context != null) {

@@ -94,6 +94,9 @@ class IOConnection implements IOCallback {
 	/** Custom Request headers used while handshaking */
 	private Properties headers;
 
+  /** Upgrade Headers */
+  private Map<String, String> upgradeHeaders;
+
 	/**
 	 * The first socket to be connected. the socket.io server does not send a
 	 * connected response to this one.
@@ -310,6 +313,30 @@ class IOConnection implements IOCallback {
 			heartbeatTimeout = Long.parseLong(data[1]) * 1000;
 			closingTimeout = Long.parseLong(data[2]) * 1000;
 			protocols = Arrays.asList(data[3].split(","));
+
+      // My code, to keep cookie from handshake..
+      Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+      for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
+        if ("Set-Cookie".equals((String) entry.getKey())) {
+          List<String> cookies = entry.getValue();
+          String cookieString = "";
+          for (int i = 0; i < cookies.size(); i++) {
+            if (i == cookies.size() - 1) {
+              cookieString += cookies.get(i);
+            } else {
+              cookieString += (cookies.get(i) + ";");
+            }
+          }
+
+          if (!("".equals(cookieString))) {
+            if (upgradeHeaders == null) {
+              upgradeHeaders = new HashMap<String, String>();
+            }
+            upgradeHeaders.put("Cookie", cookieString);
+          }
+        }
+      }
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			error(new SocketIOException("Error while handshaking", e));
@@ -868,6 +895,15 @@ class IOConnection implements IOCallback {
 	public IOTransport getTransport() {
 		return transport;
 	}
+
+  /**
+   * gets the upgrade headers.
+   *
+   * @return upgrade headers
+   */
+  public Map<String, String> getUpgradeHeaders() {
+    return upgradeHeaders;
+  }
 
 	@Override
 	public void onDisconnect() {
